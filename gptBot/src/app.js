@@ -5,7 +5,8 @@ const { OpenAI } = require('openai');
 const TOKEN = process.env.TOKEN;
 
 const openai = new OpenAI({
-    apiKey: process.env.API_KEY
+    apiKey: process.env.API_KEY,
+    organization: process.env.ORG_KEY
 });
 
 const client = new Client({
@@ -26,19 +27,31 @@ client.on('messageCreate', async (message) => {
     if(message.content.startsWith('!')) return;
 
     let conversationLog = [{ role: 'system', content: 'You are friendly chatbot' }];
-    conversationLog.push({
-        role: 'user',
-        content: message.content
-    });
-
+    
     await message.channel.sendTyping();
 
-    const result = await openai.completions.create({
-        model: 'gpt-3.5-turbo-instruct-0914',
-        messages: conversationLog
-    })
+    let previousMessages = await message.channel.messages.fetch({ limit: 15 });
+    previousMessages.reverse();
 
-    message.reply(result.data.choices[0].message);
+    previousMessages.forEach((msg) => {
+        if(message.content.startsWith('!')) return;
+        if(msg.author.id != client.user.id && message.author.bot) return;
+        if(msg.author.id != message.author.id) return;
+
+        conversationLog.push({
+            role: 'user',
+            content: msg.content
+        });
+    });
+
+    
+
+    const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: conversationLog
+    }).then((response) => message.reply(response.choices[0].message.content)).catch((error) => console.log(`Error occured: ${error}`));
+
+    // message.reply(result);
 });
 
 client.login(TOKEN);
