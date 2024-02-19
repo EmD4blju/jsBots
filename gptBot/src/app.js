@@ -49,7 +49,7 @@ client.on('messageCreate', async (message) => {
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: conversationLog
-    }).then((response) => message.reply(response.choices[0].message.content)).catch((error) => console.log(`Error occured: ${error}`));
+    }).then((response) => message.reply('🗨️ ' + response.choices[0].message.content)).catch((error) => console.log(`Error occured: ${error}`));
 
     // message.reply(result);
 });
